@@ -1,12 +1,12 @@
 # GesturePilot
 
-**A real-time, camera-based gesture agent that maps five dynamic hand gestures to macOS system controls — no keyboard, no trackpad.**
+**A real-time, camera-based gesture agent that maps five dynamic hand gestures to macOS system controls. No keyboard, no trackpad.**
 
 ---
 
 ## Project Overview
 
-GesturePilot is a hands-free interaction agent that maps five dynamic hand gestures captured from a built-in webcam to macOS system commands — no touch device required. It implements the full Perception → Planning → Control pipeline in two versions (Non-DL and DL) for direct comparison.
+GesturePilot is a hands-free interaction agent that maps five dynamic hand gestures captured from a built-in webcam to macOS system commands. No touch device required. It implements the full Perception → Planning → Control pipeline in two versions (Non-DL and DL) for direct comparison.
 
 | Agent Layer | Implementation |
 |-------------|---------------|
