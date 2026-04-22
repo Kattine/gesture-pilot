@@ -1,6 +1,6 @@
 # GesturePilot
 
-**Agent Course — Project 2**
+**Agent Project**
 Real-time camera-based gesture recognition → macOS system-level window control
 
 ---
