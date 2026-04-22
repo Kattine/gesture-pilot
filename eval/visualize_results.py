@@ -1,18 +1,18 @@
 """
 eval/visualize_results.py
-生成所有评估图表（用于 10 分钟视频截图）
+Generate all evaluation charts (for 10-minute video screenshots)
 
-运行方式：
+Usage:
   python eval/visualize_results.py
 
-前提：
-  - eval/evaluate_offline.py 已运行（生成混淆矩阵 + F1 图）
-  - eval/evaluate_online.py  已运行（生成延迟 + 准确率数据）
+Prerequisites:
+  - eval/evaluate_offline.py has been run (generates confusion matrices + F1 chart)
+  - eval/evaluate_online.py  has been run (generates latency + accuracy data)
 
-额外生成：
-  eval/results/latency_boxplot.png     # 延迟分布箱线图（DL vs Non-DL）
-  eval/results/robustness_table.png    # 鲁棒性测试结果可视化
-  eval/results/training_curve.png      # DL 训练曲线（Loss + Val Acc）
+Additional outputs:
+  eval/results/latency_boxplot.png     # latency distribution boxplot (DL vs Non-DL)
+  eval/results/robustness_table.png    # robustness test results visualisation
+  eval/results/training_curve.png      # DL training curve (Loss + Val Acc)
 """
 
 import os
@@ -29,7 +29,7 @@ MODEL_DIR  = os.path.join(ROOT, "models")
 RESULT_DIR = os.path.join(ROOT, "eval", "results")
 os.makedirs(RESULT_DIR, exist_ok=True)
 
-GESTURES = ["swipe_left", "swipe_right", "swipe_up", "swipe_down", "fist_open"]
+GESTURES     = ["swipe_left", "swipe_right", "swipe_up", "swipe_down", "fist_open"]
 LABELS_SHORT = ["L←", "R→", "U↑", "D↓", "Fist"]
 
 plt.rcParams.update({
@@ -40,7 +40,7 @@ plt.rcParams.update({
 
 
 # ─────────────────────────────────────────────
-# 延迟箱线图
+# Latency boxplot
 # ─────────────────────────────────────────────
 
 def plot_latency_boxplot():
@@ -51,7 +51,7 @@ def plot_latency_boxplot():
     data = {}
     for label, path in paths.items():
         if not os.path.exists(path):
-            print(f"  跳过 {label}：未找到 {path}")
+            print(f"  Skipping {label}: file not found at {path}")
             continue
         res = np.load(path, allow_pickle=True).item()
         lats = []
@@ -60,14 +60,14 @@ def plot_latency_boxplot():
         data[label] = lats
 
     if not data:
-        print("  延迟箱线图：无数据，跳过")
+        print("  Latency boxplot: no data found, skipping")
         return
 
     fig, ax = plt.subplots(figsize=(5, 4))
     colors = ["#4C8BF5", "#FF6B35"]
     bp = ax.boxplot(
         list(data.values()),
-        labels=list(data.keys()),
+        tick_labels=list(data.keys()),
         patch_artist=True,
         medianprops=dict(color="black", linewidth=2),
     )
@@ -85,35 +85,65 @@ def plot_latency_boxplot():
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"  保存：{save_path}")
+    print(f"  Saved: {save_path}")
 
 
 # ─────────────────────────────────────────────
-# 鲁棒性测试表格可视化
+# Robustness test chart
 # ─────────────────────────────────────────────
 
 def plot_robustness_table():
     """
-    手动输入鲁棒性测试数据（运行在线测试后填写）。
-    格式：{条件: {模式: 准确率}}
+    Load robustness results from eval/results/robustness_results.npy if available,
+    otherwise fall back to the hardcoded placeholder values below.
+
+    Run eval/robustness_eval.py first to generate real data.
+    Format: {condition: {mode: accuracy}}
     """
-    # ⚠️ 将此处替换为你的实际测试数据
-    robustness_data = {
-        "Normal\n(baseline)":    {"Non-DL": 0.88, "DL": 0.93},
-        "Low Light":             {"Non-DL": 0.82, "DL": 0.87},
-        "Complex\nBackground":   {"Non-DL": 0.80, "DL": 0.85},
-        "Different\nUser":       {"Non-DL": 0.75, "DL": 0.82},
-    }
+    npy_path = os.path.join(RESULT_DIR, "robustness_results.npy")
+    if os.path.exists(npy_path):
+        robustness_data = np.load(npy_path, allow_pickle=True).item()
+        print("  Robustness: loaded from robustness_results.npy")
+    else:
+        # ⚠️ Replace with your actual test results if not using robustness_eval.py
+        robustness_data = {
+            "Normal\n(baseline)":    {"Non-DL": 0.88, "DL": 0.93},
+            "Low Light":             {"Non-DL": 0.82, "DL": 0.87},
+            "Complex\nBackground":   {"Non-DL": 0.80, "DL": 0.85},
+            "Different\nUser":       {"Non-DL": 0.75, "DL": 0.82},
+        }
+        print("  Robustness: using placeholder values (run robustness_eval.py for real data)")
 
     conditions = list(robustness_data.keys())
-    nondl_accs = [robustness_data[c]["Non-DL"] for c in conditions]
-    dl_accs    = [robustness_data[c]["DL"]     for c in conditions]
 
-    x = np.arange(len(conditions))
-    width = 0.35
+    # Detect which modes are present (supports single-mode runs)
+    sample    = robustness_data[conditions[0]]
+    has_nondl = "Non-DL" in sample
+    has_dl    = "DL"     in sample
+
+    nondl_accs = [robustness_data[c].get("Non-DL", 0) for c in conditions] if has_nondl else []
+    dl_accs    = [robustness_data[c].get("DL",     0) for c in conditions] if has_dl    else []
+
+    x     = np.arange(len(conditions))
+    width = 0.35 if (has_nondl and has_dl) else 0.5
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.bar(x - width/2, nondl_accs, width, label="Non-DL", color="#4C8BF5", alpha=0.85)
-    ax.bar(x + width/2, dl_accs,    width, label="DL",     color="#FF6B35", alpha=0.85)
+
+    if has_nondl and has_dl:
+        ax.bar(x - width/2, nondl_accs, width, label="Non-DL (RF)", color="#4C8BF5", alpha=0.85)
+        ax.bar(x + width/2, dl_accs,    width, label="DL (LSTM)",   color="#FF6B35", alpha=0.85)
+        for i, (a, b) in enumerate(zip(nondl_accs, dl_accs)):
+            ax.text(i - width/2, a + 0.01, f"{a:.0%}", ha="center", va="bottom", fontsize=9)
+            ax.text(i + width/2, b + 0.01, f"{b:.0%}", ha="center", va="bottom", fontsize=9)
+    elif has_dl:
+        bars = ax.bar(x, dl_accs, width, label="DL (LSTM)", color="#FF6B35", alpha=0.85)
+        for bar, a in zip(bars, dl_accs):
+            ax.text(bar.get_x() + bar.get_width()/2, a + 0.01,
+                    f"{a:.0%}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+    else:
+        bars = ax.bar(x, nondl_accs, width, label="Non-DL (RF)", color="#4C8BF5", alpha=0.85)
+        for bar, a in zip(bars, nondl_accs):
+            ax.text(bar.get_x() + bar.get_width()/2, a + 0.01,
+                    f"{a:.0%}", ha="center", va="bottom", fontsize=10, fontweight="bold")
 
     ax.set_xticks(x)
     ax.set_xticklabels(conditions, fontsize=10)
@@ -123,28 +153,24 @@ def plot_robustness_table():
     ax.legend(fontsize=10)
     ax.axhline(y=0.8, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
 
-    for i, (a, b) in enumerate(zip(nondl_accs, dl_accs)):
-        ax.text(i - width/2, a + 0.01, f"{a:.0%}", ha="center", va="bottom", fontsize=9)
-        ax.text(i + width/2, b + 0.01, f"{b:.0%}", ha="center", va="bottom", fontsize=9)
-
     save_path = os.path.join(RESULT_DIR, "robustness_table.png")
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"  保存：{save_path}")
+    print(f"  Saved: {save_path}")
 
 
 # ─────────────────────────────────────────────
-# DL 训练曲线
+# DL training curve
 # ─────────────────────────────────────────────
 
 def plot_training_curve():
     log_path = os.path.join(MODEL_DIR, "training_log.npy")
     if not os.path.exists(log_path):
-        print("  训练曲线：未找到 training_log.npy，跳过")
+        print("  Training curve: training_log.npy not found, skipping")
         return
 
-    log = np.load(log_path, allow_pickle=True).item()
+    log    = np.load(log_path, allow_pickle=True).item()
     epochs = range(1, len(log["train_loss"]) + 1)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
@@ -166,23 +192,23 @@ def plot_training_curve():
     save_path = os.path.join(RESULT_DIR, "training_curve.png")
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"  保存：{save_path}")
+    print(f"  Saved: {save_path}")
 
 
 # ─────────────────────────────────────────────
-# 主流程
+# Main
 # ─────────────────────────────────────────────
 
 def main():
     print("\n" + "=" * 50)
-    print("  生成评估图表")
+    print("  Generating Evaluation Charts")
     print("=" * 50)
 
     plot_latency_boxplot()
     plot_robustness_table()
     plot_training_curve()
 
-    print(f"\n  ✅ 所有图表已保存到 {RESULT_DIR}")
+    print(f"\n  All charts saved to {RESULT_DIR}")
     print("=" * 50 + "\n")
 
 
