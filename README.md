@@ -94,7 +94,10 @@ gesture-pilot/
 └── eval/
     ├── evaluate_offline.py      # confusion matrix + F1 report
     ├── evaluate_online.py       # real-world accuracy + latency
-    └── visualize_prototypes.py  # render most-confident sample per class
+    ├── rebuild_robustness.py    # reconstruct robustness chart
+    ├── robustness_eval.py       # quick robustness test
+    ├── visualize_prototypes.py  # render most-confident sample per class
+    └── visualize_prototypes.py  # generate all evaluation charts
 ```
 
 ---
