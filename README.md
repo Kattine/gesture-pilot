@@ -1,7 +1,6 @@
 # GesturePilot
 
-**About This Agent:**
-Real-time camera-based gesture recognition → macOS system-level window control
+**A real-time, camera-based gesture agent that maps five dynamic hand gestures to macOS system controls — no keyboard, no trackpad.**
 
 ---
 
