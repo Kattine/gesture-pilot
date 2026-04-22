@@ -97,7 +97,7 @@ gesture-pilot/
     ├── rebuild_robustness.py    # reconstruct robustness chart
     ├── robustness_eval.py       # quick robustness test
     ├── visualize_prototypes.py  # render most-confident sample per class
-    └── visualize_prototypes.py  # generate all evaluation charts
+    └── visualize_results.py  # generate all evaluation charts
 ```
 
 ---
