@@ -1,0 +1,12 @@
+mediapipe-silicon
+opencv-python
+scikit-learn
+pynput
+numpy
+scipy
+rumps
+matplotlib
+seaborn
+joblib
+# PyTorch (Apple Silicon MPS):
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/nightly/cpu
